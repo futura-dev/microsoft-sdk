@@ -2,7 +2,7 @@
   "name": "@futura-dev/microsoft-sdk",
   "private": false,
   "description": "",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "main": "dist/index",
   "types": "dist/index",
   "scripts": {
