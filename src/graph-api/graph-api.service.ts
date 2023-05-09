@@ -10,7 +10,6 @@ export class GraphApiService {
     private readonly client_id: string;
     private readonly client_secret: string;
     private readonly scopes: string;
-    private readonly grant_type: string;
     private readonly msal_client: msal.ConfidentialClientApplication;
     private readonly graph_client: Client;
 
@@ -19,7 +18,6 @@ export class GraphApiService {
         this.client_id = options.clientId;
         this.client_secret = options.clientSecret;
         this.scopes = options.scopes;
-        this.grant_type = options.grantType;
         // init msal client
         this.msal_client = new msal.ConfidentialClientApplication({
             auth: {
@@ -27,7 +25,7 @@ export class GraphApiService {
                     `https://login.microsoftonline.com/${this.tenant_id}`,
                 ],
                 clientId: `${this.client_id}`,
-                clientSecret: `${this.client_secret}`
+                clientSecret: `${this.client_secret}`,
             },
         });
         // init graph client

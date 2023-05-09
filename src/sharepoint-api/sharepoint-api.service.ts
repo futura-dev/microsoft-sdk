@@ -21,30 +21,41 @@ export class SharepointApiService {
         this.scopes = options.scopes;
         this.thumbprint = options.thumbprint;
         this.private_key = options.privateKey;
+        const authority = `https://login.microsoftonline.com/${this.tenant_id}`
         // init msal client
-        this.msal_client = new msal.ConfidentialClientApplication({
-            auth: {
-                knownAuthorities: [
-                    `https://login.microsoftonline.com/${this.tenant_id}`,
-                ],
-                clientId: `${this.client_id}`,
-                clientCertificate: {
-                    thumbprint: this.thumbprint,
-                    privateKey: this.private_key
+        try {
+            this.msal_client = new msal.ConfidentialClientApplication({
+                auth: {
+                    knownAuthorities: [
+                        authority
+                    ],
+                    clientId: `${this.client_id}`,
+                    clientCertificate: {
+                        thumbprint: this.thumbprint,
+                        privateKey: this.private_key
+                    }
+                },
+            });
+            // init graph client
+            this.sharepoint_client = Client.init({
+                authProvider: async (resolve) => {
+                    this.msal_client.acquireTokenByClientCredential({
+                        authority: authority,
+                        scopes: this.scopes,
+                    })
+                        .then((token) => {
+                            console.log("TOKEN", token)
+                            resolve(null, token.accessToken)
+                        })
+                        .catch(error => {
+                            console.log("ERROR PRE RESOLVE")
+                            resolve(error, null)
+                        })
                 }
-            },
-        });
-        // init graph client
-        this.sharepoint_client = Client.init({
-            authProvider: async (resolve) => {
-                this.msal_client.acquireTokenByClientCredential({
-                    authority: `https://login.microsoftonline.com/${this.tenant_id}`,
-                    scopes: this.scopes,
-                })
-                    .then((token) => resolve(null, token.accessToken))
-                    .catch(error => resolve(error, null))
-            }
-        })
+            })
+        } catch (exc) {
+            console.log("EXC", exc);
+        }
     }
 
     /**
