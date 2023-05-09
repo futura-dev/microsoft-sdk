@@ -11,7 +11,7 @@ export type SharepointModuleOptions = {
 
 @Module({})
 export class SharepointApiModule {
-  forFeature(token: string, options: SharepointModuleOptions): DynamicModule {
+  static forFeature(token: string, options: SharepointModuleOptions): DynamicModule {
 
     const provider: Provider = {
       provide: token,
