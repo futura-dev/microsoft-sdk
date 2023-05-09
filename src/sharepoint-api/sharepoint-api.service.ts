@@ -19,6 +19,8 @@ export class SharepointApiService {
         this.tenant_id = options.tenantId;
         this.client_id = options.clientId;
         this.scopes = options.scopes;
+        this.thumbprint = options.thumbprint;
+        this.private_key = options.privateKey;
         // init msal client
         this.msal_client = new msal.ConfidentialClientApplication({
             auth: {
