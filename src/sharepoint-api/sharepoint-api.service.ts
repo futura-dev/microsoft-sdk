@@ -1,7 +1,7 @@
-import {Injectable} from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import * as msal from "@azure/msal-node";
-import {SharepointModuleOptions} from "./sharepoint-api.module";
-import {Client} from "@microsoft/microsoft-graph-client";
+import { SharepointModuleOptions } from "./sharepoint-api.module";
+import { Client } from "@microsoft/microsoft-graph-client";
 
 
 @Injectable()
@@ -18,15 +18,14 @@ export class SharepointApiService {
     constructor(readonly options: SharepointModuleOptions) {
         this.tenant_id = options.tenantId;
         this.client_id = options.clientId;
-        this.scopes = options.scopes;
+        this.scopes = options.scopes.split(" ") || [""];
         this.thumbprint = options.thumbprint;
         this.private_key = options.privateKey;
+
         // init msal client
         this.msal_client = new msal.ConfidentialClientApplication({
             auth: {
-                knownAuthorities: [
-                    `https://login.microsoftonline.com/${this.tenant_id}`,
-                ],
+                authority: `https://login.microsoftonline.com/${this.tenant_id}`,
                 clientId: `${this.client_id}`,
                 clientCertificate: {
                     thumbprint: this.thumbprint,
@@ -38,12 +37,12 @@ export class SharepointApiService {
         this.sharepoint_client = Client.init({
             authProvider: async (resolve) => {
                 this.msal_client.acquireTokenByClientCredential({
-                    authority: `https://login.microsoftonline.com/${this.tenant_id}`,
                     scopes: this.scopes,
                 })
                     .then((token) => resolve(null, token.accessToken))
                     .catch(error => resolve(error, null))
-            }
+            },
+            customHosts: new Set(["futuraitsrl.sharepoint.com"])
         })
     }
 
@@ -68,7 +67,6 @@ export class SharepointApiService {
         notificationUrl: string,
         expirationTimestamp: number,
     ) => {
-        console.log('[SUBSCRIPTION REQUEST]:', listId, notificationUrl);
         // read key from files
         return this.sharepoint_client.api(`https://futuraitsrl.sharepoint.com/sites/hr/_api/web/lists('${listId}')/subscriptions`).post({
             resource:
@@ -109,5 +107,4 @@ export class SharepointApiService {
             },
         })
     }
-
 }
