@@ -1,4 +1,4 @@
-import {DynamicModule, Module, Provider} from '@nestjs/common';
+import { DynamicModule, Module, Provider } from '@nestjs/common';
 import { SharepointApiService } from './sharepoint-api.service';
 
 export type SharepointModuleOptions = {
@@ -6,7 +6,7 @@ export type SharepointModuleOptions = {
   clientId: string;
   thumbprint: string;
   privateKey: string;
-  scopes: string[]
+  scopes: string;
 }
 
 @Module({})

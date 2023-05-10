@@ -1,6 +1,6 @@
-import {Injectable} from '@nestjs/common';
-import {GraphModuleOptions} from "./graph-api.module";
-import {Client} from '@microsoft/microsoft-graph-client'
+import { Injectable } from '@nestjs/common';
+import { GraphModuleOptions } from "./graph-api.module";
+import { Client } from '@microsoft/microsoft-graph-client'
 import * as msal from "@azure/msal-node";
 
 @Injectable()
@@ -9,7 +9,7 @@ export class GraphApiService {
     private readonly tenant_id: string;
     private readonly client_id: string;
     private readonly client_secret: string;
-    private readonly scopes: string;
+    private readonly scopes: string[];
     private readonly msal_client: msal.ConfidentialClientApplication;
     private readonly graph_client: Client;
 
@@ -17,13 +17,12 @@ export class GraphApiService {
         this.tenant_id = options.tenantId;
         this.client_id = options.clientId;
         this.client_secret = options.clientSecret;
-        this.scopes = options.scopes;
+        this.scopes = options.scopes?.split(" ") || ["https://graph.microsoft.com/.default"];
+
         // init msal client
         this.msal_client = new msal.ConfidentialClientApplication({
             auth: {
-                knownAuthorities: [
-                    `https://login.microsoftonline.com/${this.tenant_id}`,
-                ],
+                authority: `https://login.microsoftonline.com/${this.tenant_id}`,
                 clientId: `${this.client_id}`,
                 clientSecret: `${this.client_secret}`,
             },
@@ -32,8 +31,7 @@ export class GraphApiService {
         this.graph_client = Client.init({
             authProvider: async (resolve) => {
                 this.msal_client.acquireTokenByClientCredential({
-                    authority: `https://login.microsoftonline.com/${this.tenant_id}`,
-                    scopes: this.scopes?.split(" ") || ["https://graph.microsoft.com/.default"],
+                    scopes: this.scopes,
                 })
                     .then((token) => resolve(null, token.accessToken))
                     .catch(error => resolve(error, null))

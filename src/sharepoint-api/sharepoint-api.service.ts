@@ -1,7 +1,7 @@
-import {Injectable} from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import * as msal from "@azure/msal-node";
-import {SharepointModuleOptions} from "./sharepoint-api.module";
-import {Client} from "@microsoft/microsoft-graph-client";
+import { SharepointModuleOptions } from "./sharepoint-api.module";
+import { Client } from "@microsoft/microsoft-graph-client";
 
 
 @Injectable()
@@ -18,44 +18,32 @@ export class SharepointApiService {
     constructor(readonly options: SharepointModuleOptions) {
         this.tenant_id = options.tenantId;
         this.client_id = options.clientId;
-        this.scopes = options.scopes;
+        this.scopes = options.scopes.split(" ") || [""];
         this.thumbprint = options.thumbprint;
         this.private_key = options.privateKey;
-        const authority = `https://login.microsoftonline.com/${this.tenant_id}`
+
         // init msal client
-        try {
-            this.msal_client = new msal.ConfidentialClientApplication({
-                auth: {
-                    knownAuthorities: [
-                        authority
-                    ],
-                    clientId: `${this.client_id}`,
-                    clientCertificate: {
-                        thumbprint: this.thumbprint,
-                        privateKey: this.private_key
-                    }
-                },
-            });
-            // init graph client
-            this.sharepoint_client = Client.init({
-                authProvider: async (resolve) => {
-                    this.msal_client.acquireTokenByClientCredential({
-                        authority: authority,
-                        scopes: this.scopes,
-                    })
-                        .then((token) => {
-                            console.log("TOKEN", token)
-                            resolve(null, token.accessToken)
-                        })
-                        .catch(error => {
-                            console.log("ERROR PRE RESOLVE")
-                            resolve(error, null)
-                        })
+        this.msal_client = new msal.ConfidentialClientApplication({
+            auth: {
+                authority: `https://login.microsoftonline.com/${this.tenant_id}`,
+                clientId: `${this.client_id}`,
+                clientCertificate: {
+                    thumbprint: this.thumbprint,
+                    privateKey: this.private_key
                 }
-            })
-        } catch (exc) {
-            console.log("EXC", exc);
-        }
+            },
+        });
+        // init graph client
+        this.sharepoint_client = Client.init({
+            authProvider: async (resolve) => {
+                this.msal_client.acquireTokenByClientCredential({
+                    scopes: this.scopes,
+                })
+                    .then((token) => resolve(null, token.accessToken))
+                    .catch(error => resolve(error, null))
+            },
+            customHosts: new Set(["futuraitsrl.sharepoint.com"])
+        })
     }
 
     /**
@@ -79,7 +67,6 @@ export class SharepointApiService {
         notificationUrl: string,
         expirationTimestamp: number,
     ) => {
-        console.log('[SUBSCRIPTION REQUEST]:', listId, notificationUrl);
         // read key from files
         return this.sharepoint_client.api(`https://futuraitsrl.sharepoint.com/sites/hr/_api/web/lists('${listId}')/subscriptions`).post({
             resource:
@@ -120,5 +107,4 @@ export class SharepointApiService {
             },
         })
     }
-
 }
