@@ -1,5 +1,5 @@
-import { DynamicModule, Module, Provider } from '@nestjs/common';
-import { SharepointApiService } from './sharepoint-api.service';
+import { DynamicModule, Module, Provider } from "@nestjs/common";
+import { SharepointApiService } from "./sharepoint-api.service";
 
 export type SharepointModuleOptions = {
   tenantId: string;
@@ -7,24 +7,26 @@ export type SharepointModuleOptions = {
   thumbprint: string;
   privateKey: string;
   scopes: string;
-}
+};
 
 @Module({})
 export class SharepointApiModule {
-  static forFeature(token: string, options: SharepointModuleOptions): DynamicModule {
-
+  static forFeature(
+    token: string,
+    options: SharepointModuleOptions
+  ): DynamicModule {
     const provider: Provider = {
       provide: token,
       useFactory: async () => {
         return new SharepointApiService({ ...options });
       }
-    }
+    };
 
     return {
       module: SharepointApiModule,
       imports: [],
       providers: [provider],
       exports: [provider]
-    }
+    };
   }
 }

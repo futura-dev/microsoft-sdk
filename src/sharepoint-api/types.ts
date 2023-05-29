@@ -17,9 +17,9 @@ export type ListWebhook = {
 };
 
 export type ListLog = {
-  'odata.type': string;
-  'odata.id': string;
-  'odata.editLink': string;
+  "odata.type": string;
+  "odata.id": string;
+  "odata.editLink": string;
   ChangeToken: {
     StringValue: `${number};${number};${string};${string};${string}`;
   };
@@ -27,19 +27,19 @@ export type ListLog = {
   SiteId: string;
   Time: string;
   Editor: string;
-  EditorEmailHint: null | any;
+  EditorEmailHint: null | unknown;
   ItemId: number;
   ListId: string;
   ServerRelativeUrl: string;
-  SharedByUser: null | any;
-  SharedWithUsers: null | any;
+  SharedByUser: null | unknown;
+  SharedWithUsers: null | unknown;
   UniqueId: string;
   WebId: string;
 };
 
 export type ListItem<T> = {
-  '@odata.context': string;
-  '@odata.etag': string;
+  "@odata.context": string;
+  "@odata.etag": string;
   createdDateTime: string;
   eTag: string;
   id: string;
@@ -61,11 +61,11 @@ export type ListItem<T> = {
     id: string;
     name: string;
   };
-  'fields@odata.context': string;
+  "fields@odata.context": string;
   fields: T;
 };
 export type HRListItem = ListItem<{
-  '@odata.etag': string;
+  "@odata.etag": string;
   Title: string;
   Attachments: boolean;
   LinkTitle: string;
@@ -104,5 +104,58 @@ export type HRListItem = ListItem<{
   _ComplianceTagUserId: string;
 }>;
 
-
-export type ColumnValue = { columnGroup: string; description: string; displayName: string; enforceUniqueValues: boolean; hidden: boolean; id: string; indexed: boolean; name: string; readOnly: boolean; required: boolean; geolocation?: Record<string, never>; boolean?: Record<string, never>; calculated?: { format: string; formula: string; outputType: 'boolean' | 'currency' | 'dateTime' | 'number' | 'text'; }; choice?: { allowTextEntry: boolean; choices: string[]; displayAs: 'checkBoxes' | 'dropDownMenu' | 'radioButtons'; }; currency?: { locale: string; }; dateTime?: { displayAs: 'default' | 'friendly' | 'standard'; format: string; }; lookup?: { allowMultipleValues: boolean; allowUnlimitedLength: boolean; columnName: string; listId: string; primaryLookupColumnId: string; }; number?: { decimalPlaces: string; displayAs: 'number' | 'percentage'; maximum: number; minimum: number; }; personOrGroup?: { allowMultipleSelection: boolean; displayAs: string; chooseFromType: 'peopleAndGroups' | 'peopleOnly'; }; text?: { allowMultipleLines: boolean; appendChangesToExistingText: boolean; linesForEditing: number; maxLength: number; textType: 'plain' | 'richText'; }; }; export type GetColumnsResponse = { '@odata.context': string; value: ColumnValue[]; };
+export type ColumnValue = {
+  columnGroup: string;
+  description: string;
+  displayName: string;
+  enforceUniqueValues: boolean;
+  hidden: boolean;
+  id: string;
+  indexed: boolean;
+  name: string;
+  readOnly: boolean;
+  required: boolean;
+  geolocation?: Record<string, never>;
+  boolean?: Record<string, never>;
+  calculated?: {
+    format: string;
+    formula: string;
+    outputType: "boolean" | "currency" | "dateTime" | "number" | "text";
+  };
+  choice?: {
+    allowTextEntry: boolean;
+    choices: string[];
+    displayAs: "checkBoxes" | "dropDownMenu" | "radioButtons";
+  };
+  currency?: { locale: string };
+  dateTime?: { displayAs: "default" | "friendly" | "standard"; format: string };
+  lookup?: {
+    allowMultipleValues: boolean;
+    allowUnlimitedLength: boolean;
+    columnName: string;
+    listId: string;
+    primaryLookupColumnId: string;
+  };
+  number?: {
+    decimalPlaces: string;
+    displayAs: "number" | "percentage";
+    maximum: number;
+    minimum: number;
+  };
+  personOrGroup?: {
+    allowMultipleSelection: boolean;
+    displayAs: string;
+    chooseFromType: "peopleAndGroups" | "peopleOnly";
+  };
+  text?: {
+    allowMultipleLines: boolean;
+    appendChangesToExistingText: boolean;
+    linesForEditing: number;
+    maxLength: number;
+    textType: "plain" | "richText";
+  };
+};
+export type GetColumnsResponse = {
+  "@odata.context": string;
+  value: ColumnValue[];
+};

@@ -48,3 +48,6 @@ build/config\.gypi
 pnpm-lock.yaml
 
 dist
+
+# cosmodrome
+.cosmodrome.json
