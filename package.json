@@ -2,7 +2,7 @@
   "name": "@futura-dev/microsoft-sdk",
   "private": false,
   "description": "A NodeJS implementation of Microsoft SDK to interact with Microsoft APIs",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "main": "dist/index",
   "types": "dist/index",
   "scripts": {
