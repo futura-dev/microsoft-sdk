@@ -53,6 +53,17 @@ export class GraphApiService {
     }
 
     /**
+     * @param identifier - user email or id
+     */
+    getUserProfilePhoto = async (options: { identifier: string }): Promise<Blob> => {
+        const profilePhoto = await this.graph_client
+            .api(`https://graph.microsoft.com/v1.0/users('${options.identifier}')/photo/$value`)
+            .get()
+
+        return profilePhoto;
+    }
+
+    /**
      *
      * @param options
      */
