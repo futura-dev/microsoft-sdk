@@ -9,8 +9,7 @@ export class SharepointApiService {
 
     private readonly tenant_id: string;
     private readonly client_id: string;
-    private readonly thumbprint: string;
-    private readonly private_key: string;
+    private readonly client_secret: string;
     private readonly scopes: string[];
     private readonly msal_client: msal.ConfidentialClientApplication;
     private readonly sharepoint_client: Client;
@@ -18,19 +17,15 @@ export class SharepointApiService {
     constructor(readonly options: SharepointModuleOptions) {
         this.tenant_id = options.tenantId;
         this.client_id = options.clientId;
+        this.client_secret = options.clientSecret;
         this.scopes = options.scopes.split(" ") || [""];
-        this.thumbprint = options.thumbprint;
-        this.private_key = options.privateKey;
 
         // init msal client
         this.msal_client = new msal.ConfidentialClientApplication({
             auth: {
                 authority: `https://login.microsoftonline.com/${this.tenant_id}`,
                 clientId: `${this.client_id}`,
-                clientCertificate: {
-                    thumbprint: this.thumbprint,
-                    privateKey: this.private_key
-                }
+                clientSecret: `${this.client_secret}`
             },
         });
         // init graph client
@@ -109,5 +104,24 @@ export class SharepointApiService {
                 },
             },
         })
-    }
+    };
+
+    uploadDriveItemIntoSite = async (input: { 
+        siteId: string;
+        fileName: string;
+        content: Buffer;
+        }): Promise<{
+            createdDateTime: string;
+            eTag: string;  id: string;
+            lastModifiedDateTime: string;
+            name: string;
+            webUrl: string;
+            cTag: string;
+            size: number;
+        }> => {
+        return await this.sharepoint_client
+            .api(`/sites/${input.siteId}/drive/root:/${input.fileName}:/content`)
+            .headers({ "Content-Type": "application/octet-stream" }) // o text/plain se è testo
+            .put(input.content);
+        };
 }
