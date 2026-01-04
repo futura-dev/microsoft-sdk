@@ -40,7 +40,7 @@ export class GraphApiService {
                     })
                     .catch(error => resolve(error, null))
             }
-        })
+        });
     }
 
     /**
@@ -118,7 +118,29 @@ export class GraphApiService {
         return this.graph_client
             .api(`https://graph.microsoft.com/v1.0/sites/${options.siteId}/lists/${options.listId}/items`)
             .post(options.body)
+    };
+
+    
+    getSites = async () => {
+        return this.graph_client
+            .api(`https://graph.microsoft.com/v1.0/sites`)
+            .get();
+    }
+    getSite = async (input: { siteId: string }) => {
+        return this.graph_client
+            .api(`https://graph.microsoft.com/v1.0/sites/${input.siteId}`)
+            .get();
     }
 
+    listSiteDrives = async (input: { siteId: string }) => {
+        return this.graph_client
+            .api(`https://graph.microsoft.com/v1.0/sites/${input.siteId}/drives`)
+            .get();
+    }
+    listSiteDriveChildrens = async (input: { siteId: string, driveId: string }) => {
+        return this.graph_client
+            .api(`https://graph.microsoft.com/v1.0/sites/${input.siteId}/drives/${input.driveId}/items`)
+            .get();
+    }
 
 }

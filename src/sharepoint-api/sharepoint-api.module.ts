@@ -4,8 +4,9 @@ import { SharepointApiService } from "./sharepoint-api.service";
 export type SharepointModuleOptions = {
   tenantId: string;
   clientId: string;
-  thumbprint: string;
-  privateKey: string;
+  // thumbprint: string;
+  // privateKey: string;
+  clientSecret: string;
   scopes: string;
 };
 
