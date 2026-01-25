@@ -24,7 +24,7 @@
     "url": "https://github.com/futura-dev/microsoft-sdk"
   },
   "dependencies": {
-    "@azure/identity": "^4.5.0",
+    "@azure/identity": "^4.13.0",
     "@azure/msal-node": "^2.16.1",
     "@microsoft/microsoft-graph-client": "^3.0.7",
     "@nestjs/common": "^10.4.7",
