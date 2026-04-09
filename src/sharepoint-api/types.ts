@@ -4,6 +4,57 @@ type MicrosoftGraphIdentitySet = {
   displayName: string;
 };
 
+export type DriveItem = {
+  id: string;
+  name: string;
+  webUrl: string;
+  createdDateTime: string;
+  lastModifiedDateTime: string;
+  eTag: string;
+  cTag?: string;
+  size?: number;
+  folder?: {
+    childCount?: number;
+  };
+  file?: {
+    mimeType?: string;
+  };
+};
+
+export type DriveRecipient = {
+  email: string;
+};
+
+export type DriveItemPermissionIdentity = {
+  user?: {
+    email?: string;
+    displayName?: string;
+    id?: string;
+  };
+};
+
+export type DriveItemPermission = {
+  id: string;
+  roles?: string[];
+  inheritedFrom?: unknown;
+  invitation?: {
+    email?: string;
+    signInRequired?: boolean;
+  };
+  grantedTo?: DriveItemPermissionIdentity;
+  grantedToV2?: DriveItemPermissionIdentity;
+  grantedToIdentities?: DriveItemPermissionIdentity[];
+  grantedToIdentitiesV2?: DriveItemPermissionIdentity[];
+};
+
+export type DriveItemPermissionsResponse = {
+  value: DriveItemPermission[];
+};
+
+export type InviteDriveItemPermissionsResponse = {
+  value: DriveItemPermission[];
+};
+
 export type ListWebhook = {
   value: {
     subscriptionId: string;
