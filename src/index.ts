@@ -3,6 +3,12 @@ import { GraphApiModule } from "./graph-api/graph-api.module";
 import { SharepointApiService } from "./sharepoint-api/sharepoint-api.service";
 import { SharepointApiModule } from "./sharepoint-api/sharepoint-api.module";
 import {
+  ListUsersItemDTO,
+  ListUsersPageDTO,
+  MicrosoftUserType,
+  UserResponseDTO,
+} from "./graph-api/dto/response/user.response.dto";
+import {
   DriveItem,
   DriveItemPermission,
   DriveItemPermissionsResponse,
@@ -31,4 +37,8 @@ export type {
   ListLog,
   ListItem,
   HRListItem,
+  ListUsersItemDTO,
+  ListUsersPageDTO,
+  MicrosoftUserType,
+  UserResponseDTO,
 };

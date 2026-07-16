@@ -3,9 +3,34 @@ import { GraphModuleOptions } from "./graph-api.module";
 import { Client } from "@microsoft/microsoft-graph-client";
 import * as msal from "@azure/msal-node";
 import {
+  ListUsersItemDTO,
+  ListUsersPageDTO,
   UserExpandKeys,
   UserResponseDTO,
 } from "./dto/response/user.response.dto";
+
+// Fields requested from the directory listing. Derived from the keys of
+// ListUsersItemDTO via `satisfies`, so the query and the return type share one
+// source of truth: a typo or a field removed from the DTO is a compile error
+// here, never a silent mismatch between what we ask for and what we type.
+const LIST_USERS_SELECT_FIELDS = [
+  "id",
+  "displayName",
+  "givenName",
+  "surname",
+  "mail",
+  "userPrincipalName",
+  "jobTitle",
+  "accountEnabled",
+  "userType",
+] as const satisfies readonly (keyof ListUsersItemDTO)[];
+
+const LIST_USERS_SELECT = LIST_USERS_SELECT_FIELDS.join(",");
+
+// Graph caps $top at 999 for /users; clamp so a caller can't trigger a 400.
+const LIST_USERS_MIN_PAGE_SIZE = 1;
+const LIST_USERS_MAX_PAGE_SIZE = 999;
+const LIST_USERS_DEFAULT_PAGE_SIZE = 100;
 
 @Injectable()
 export class GraphApiService {
@@ -60,6 +85,50 @@ export class GraphApiService {
         `https://graph.microsoft.com/v1.0/users('${options.identifier}')?$expand=${options.expand}`,
       )
       .get();
+  };
+
+  /**
+   * Lists every user in the directory, following pagination to completion.
+   *
+   * Uses the app's own credentials (client-credentials flow), so it requires
+   * the application permission `User.Read.All` granted + admin-consented on the
+   * app registration — otherwise Graph returns 403.
+   *
+   * Returns the full set: intended for a one-off backoffice sync, not for
+   * high-frequency calls. `pageSize` only controls how many round trips it
+   * takes, not the result (all pages are aggregated).
+   */
+  listUsers = async (options?: {
+    /**
+     * Users fetched per Graph round trip. Does NOT change the result — every
+     * page is aggregated and the full directory is returned regardless. Only
+     * affects how many requests it takes. Clamped to Graph's 1–999 range;
+     * defaults to 100.
+     */
+    pageSize?: number;
+  }): Promise<ListUsersItemDTO[]> => {
+    const pageSize = Math.min(
+      Math.max(options?.pageSize ?? LIST_USERS_DEFAULT_PAGE_SIZE, LIST_USERS_MIN_PAGE_SIZE),
+      LIST_USERS_MAX_PAGE_SIZE,
+    );
+
+    const users: ListUsersItemDTO[] = [];
+
+    let page: ListUsersPageDTO = await this.graph_client
+      .api(
+        `https://graph.microsoft.com/v1.0/users?$select=${LIST_USERS_SELECT}&$top=${pageSize}`,
+      )
+      .get();
+    users.push(...(page.value ?? []));
+
+    // `@odata.nextLink` is an absolute URL that already carries $select/$top and
+    // the skip token — pass it through unchanged until the directory runs out.
+    while (page["@odata.nextLink"]) {
+      page = await this.graph_client.api(page["@odata.nextLink"]).get();
+      users.push(...(page.value ?? []));
+    }
+
+    return users;
   };
 
   /**
