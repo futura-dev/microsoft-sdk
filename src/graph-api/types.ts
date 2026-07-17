@@ -1,8 +1,19 @@
+import { GraphPage } from "./pagination";
+
 type MicrosoftGraphIdentitySet = {
   id: string;
   email: string;
   displayName: string;
 };
+
+export type Site = {
+  id: string;
+  name: string;
+  displayName: string;
+  webUrl: string;
+};
+
+export type SiteSearchResponse = GraphPage<Site>;
 
 export type ListWebhook = {
   value: {

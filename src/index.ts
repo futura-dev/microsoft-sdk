@@ -8,6 +8,8 @@ import {
   MicrosoftUserType,
   UserResponseDTO,
 } from "./graph-api/dto/response/user.response.dto";
+import { Site, SiteSearchResponse } from "./graph-api/types";
+import { GraphPage } from "./graph-api/pagination";
 import {
   DriveItem,
   DriveItemPermission,
@@ -41,4 +43,7 @@ export type {
   ListUsersPageDTO,
   MicrosoftUserType,
   UserResponseDTO,
+  Site,
+  SiteSearchResponse,
+  GraphPage,
 };

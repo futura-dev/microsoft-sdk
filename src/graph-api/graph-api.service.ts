@@ -8,6 +8,9 @@ import {
   UserExpandKeys,
   UserResponseDTO,
 } from "./dto/response/user.response.dto";
+import { Site, SiteSearchResponse } from "./types";
+import { DriveItem } from "../sharepoint-api/types";
+import { fetchGraphPage, fetchGraphNextPage, GraphPage } from "./pagination";
 
 // Fields requested from the directory listing. Derived from the keys of
 // ListUsersItemDTO via `satisfies`, so the query and the return type share one
@@ -88,47 +91,37 @@ export class GraphApiService {
   };
 
   /**
-   * Lists every user in the directory, following pagination to completion.
+   * Lists users in the directory (GET /users).
    *
    * Uses the app's own credentials (client-credentials flow), so it requires
    * the application permission `User.Read.All` granted + admin-consented on the
    * app registration — otherwise Graph returns 403.
    *
-   * Returns the full set: intended for a one-off backoffice sync, not for
-   * high-frequency calls. `pageSize` only controls how many round trips it
-   * takes, not the result (all pages are aggregated).
+   * Paginated like every other collection method on this client: `unroll`
+   * defaults to false (first page only, plus `@odata.nextLink` if there's
+   * more) — pass `unroll: true` to follow every page and get the full
+   * directory aggregated in one call (intended for a one-off backoffice sync,
+   * not for high-frequency calls).
    */
   listUsers = async (options?: {
     /**
-     * Users fetched per Graph round trip. Does NOT change the result — every
-     * page is aggregated and the full directory is returned regardless. Only
-     * affects how many requests it takes. Clamped to Graph's 1–999 range;
-     * defaults to 100.
+     * Users fetched per Graph round trip. Does NOT change the result set,
+     * only how many requests it takes to get there. Clamped to Graph's
+     * 1–999 range; defaults to 100.
      */
     pageSize?: number;
-  }): Promise<ListUsersItemDTO[]> => {
+    unroll?: boolean;
+  }): Promise<ListUsersPageDTO> => {
     const pageSize = Math.min(
       Math.max(options?.pageSize ?? LIST_USERS_DEFAULT_PAGE_SIZE, LIST_USERS_MIN_PAGE_SIZE),
       LIST_USERS_MAX_PAGE_SIZE,
     );
 
-    const users: ListUsersItemDTO[] = [];
-
-    let page: ListUsersPageDTO = await this.graph_client
-      .api(
-        `https://graph.microsoft.com/v1.0/users?$select=${LIST_USERS_SELECT}&$top=${pageSize}`,
-      )
-      .get();
-    users.push(...(page.value ?? []));
-
-    // `@odata.nextLink` is an absolute URL that already carries $select/$top and
-    // the skip token — pass it through unchanged until the directory runs out.
-    while (page["@odata.nextLink"]) {
-      page = await this.graph_client.api(page["@odata.nextLink"]).get();
-      users.push(...(page.value ?? []));
-    }
-
-    return users;
+    return fetchGraphPage<ListUsersItemDTO>(
+      this.graph_client,
+      `https://graph.microsoft.com/v1.0/users?$select=${LIST_USERS_SELECT}&$top=${pageSize}`,
+      options?.unroll,
+    );
   };
 
   /**
@@ -208,11 +201,40 @@ export class GraphApiService {
       .post(options.body);
   };
 
-  getSites = async () => {
-    return this.graph_client
-      .api(`https://graph.microsoft.com/v1.0/sites`)
-      .get();
+  /**
+   * Searches SharePoint sites the app registration can see, via Graph's
+   * `/sites?search=` — Graph rejects `/sites` with no `search` term, so an
+   * empty/omitted query defaults to `*` (Graph's documented "match every
+   * site" wildcard) instead of failing.
+   *
+   * Paginated like every other collection method on this client — see
+   * `unroll` on `listUsers` above.
+   */
+  searchSites = async (input?: {
+    query?: string;
+    unroll?: boolean;
+  }): Promise<SiteSearchResponse> => {
+    const query = input?.query?.trim() || "*";
+    return fetchGraphPage<Site>(
+      this.graph_client,
+      `https://graph.microsoft.com/v1.0/sites?search=${encodeURIComponent(query)}`,
+      input?.unroll,
+    );
   };
+
+  /**
+   * Fetches the next page of any paginated collection call made without
+   * `unroll: true` (sites, users, ...) — pass the `@odata.nextLink` from the
+   * previous response verbatim (it's an absolute URL that already carries
+   * the original query and skip token). `T` is the item type of that
+   * collection, e.g. `getNextPage<Site>(...)`.
+   */
+  getNextPage = async <T>(input: {
+    nextLink: string;
+  }): Promise<GraphPage<T>> => {
+    return fetchGraphNextPage<T>(this.graph_client, input.nextLink);
+  };
+
   getSite = async (input: { siteId: string }) => {
     return this.graph_client
       .api(`https://graph.microsoft.com/v1.0/sites/${input.siteId}`)
@@ -233,5 +255,36 @@ export class GraphApiService {
         `https://graph.microsoft.com/v1.0/sites/${input.siteId}/drives/${input.driveId}/items`,
       )
       .get();
+  };
+
+  // Path segments are individually percent-encoded (not the whole path, so
+  // literal "/" keeps separating segments) — same approach as
+  // SharepointApiService.encodePath, duplicated here since it's a stateless
+  // one-liner and the two services don't share a base class.
+  private encodeDrivePath(path: string): string {
+    return path
+      .split("/")
+      .filter(Boolean)
+      .map((segment) => encodeURIComponent(segment))
+      .join("/");
+  }
+
+  /**
+   * Lists the children of a folder in a site's default document library,
+   * addressed by path instead of item id — lets a caller drill down a
+   * SharePoint folder tree (e.g. to pick a `docsBasePath`) knowing only
+   * the site id and the path built up so far. Omit `path` (or pass "") for
+   * the drive root.
+   */
+  getSiteDriveChildrenByPath = async (input: {
+    siteId: string;
+    path?: string;
+  }): Promise<{ value: DriveItem[] }> => {
+    const trimmedPath = input.path?.split("/").filter(Boolean).join("/");
+    const url = trimmedPath
+      ? `https://graph.microsoft.com/v1.0/sites/${input.siteId}/drive/root:/${this.encodeDrivePath(trimmedPath)}:/children`
+      : `https://graph.microsoft.com/v1.0/sites/${input.siteId}/drive/root/children`;
+
+    return this.graph_client.api(url).get();
   };
 }

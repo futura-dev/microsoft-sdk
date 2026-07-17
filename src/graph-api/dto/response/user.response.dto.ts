@@ -1,3 +1,5 @@
+import { GraphPage } from "../../pagination";
+
 export interface BaseUserResponseDTO {
   id: string;
   "@odata.context": "https://graph.microsoft.com/v1.0/$metadata#users/$entity";
@@ -57,10 +59,6 @@ export interface ListUsersItemDTO {
   userType: MicrosoftUserType | null;
 }
 
-// Raw shape of a single page from Graph's GET /users. `@odata.nextLink`, when
-// present, is the absolute URL of the next page — followed until absent to
-// return the full directory. Internal to listUsers; not part of its return.
-export interface ListUsersPageDTO {
-  value: ListUsersItemDTO[];
-  "@odata.nextLink"?: string;
-}
+// Single page from Graph's GET /users — same shared shape (GraphPage) every
+// paginated GraphApiService method returns.
+export type ListUsersPageDTO = GraphPage<ListUsersItemDTO>;
