@@ -113,7 +113,10 @@ export class GraphApiService {
     unroll?: boolean;
   }): Promise<ListUsersPageDTO> => {
     const pageSize = Math.min(
-      Math.max(options?.pageSize ?? LIST_USERS_DEFAULT_PAGE_SIZE, LIST_USERS_MIN_PAGE_SIZE),
+      Math.max(
+        options?.pageSize ?? LIST_USERS_DEFAULT_PAGE_SIZE,
+        LIST_USERS_MIN_PAGE_SIZE,
+      ),
       LIST_USERS_MAX_PAGE_SIZE,
     );
 
@@ -218,6 +221,28 @@ export class GraphApiService {
     return fetchGraphPage<Site>(
       this.graph_client,
       `https://graph.microsoft.com/v1.0/sites?search=${encodeURIComponent(query)}`,
+      input?.unroll,
+    );
+  };
+
+  /**
+   * Lists every SharePoint site the app registration can see, via Graph's
+   * `GET /sites/getAllSites`. Unlike `searchSites` (`/sites?search=`, served
+   * from SharePoint's search index — eventually consistent, so a freshly
+   * created or newly-permissioned site can be missing for a while), this reads
+   * the sites directly, so new sites show up immediately. Prefer it for a
+   * "pick a site" picker where staleness is confusing. Requires the same
+   * `Sites.Read.All` application permission.
+   *
+   * Paginated like every other collection method on this client — see `unroll`
+   * on `listUsers` above.
+   */
+  getAllSites = async (input?: {
+    unroll?: boolean;
+  }): Promise<SiteSearchResponse> => {
+    return fetchGraphPage<Site>(
+      this.graph_client,
+      `https://graph.microsoft.com/v1.0/sites/getAllSites`,
       input?.unroll,
     );
   };

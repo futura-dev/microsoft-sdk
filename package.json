@@ -39,7 +39,8 @@
     "@futura-dev/eslint-config-typescript": "^1.0.3",
     "@types/node": "^22.9.0",
     "npm-check-updates": "^17.1.11",
-    "rimraf": "^6.0.1"
+    "rimraf": "^6.0.1",
+    "tsx": "^4.23.1"
   },
   "engines": {
     "node": ">=18"
